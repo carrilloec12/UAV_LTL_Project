@@ -2,14 +2,13 @@
 """
 UAV collision avoidance:
 
-Initially, obstacle is put in X1. Never visits X1 again.
+Initially, obstacle is put in X1. Then, obstacle is removed from X1 and changed to X4.
+UAV is required to move from X0 to X4 and back from X4 to X0 infinitely often.
 
-Result: 
-X0-X3-X6-X7-X8
+UAV goes to goal and comes back home.
 
-X8-X5-X2-X5-X4-X3-X0
+count = number of steps that obs has been true.
 
-This is a test to see if github works
 """
 # RMM, 20 Jul 2013
 #
@@ -75,23 +74,26 @@ sys.transitions.add_comb({'X8'}, {'X5', 'X7'})
 
 # @system_labels_section@
 # Add atomic propositions to the states
-sys.atomic_propositions.add_from({'goal','obsX1','home'}) #,'obsX3'})
+sys.atomic_propositions.add_from({'goal','obsX1','home','obsX3'})
 sys.states.add('X0', ap={'home'})
 sys.states.add('X8', ap={'goal'})
 sys.states.add('X1', ap={'obsX1'})
-
+sys.states.add('X3', ap={'obsX3'})
 # @system_labels_section_end@
 
 # if IPython and Matplotlib available
 #sys.plot()
 
 #
+
+#
 # Environment variables and specification
 # @environ_section@
-env_vars = {'X1o': 'boolean'} 
-env_init = {'X1o'}            
-env_prog = set() 
-env_safe = set()
+env_vars = {'obs3': 'boolean', 'obs1': 'boolean', 'count1': range(3), 'count3': range(3)}  
+env_init = {'obs3', 'count1 = 0', '!obs1', 'count3 = 0'}    
+env_prog = {'!obs3', 'obs1'} 
+env_safe = {'(!obs3 ->  (X count3 = count3))', '(obs3 ->  (X count3 = count3 + 1))', 'count3<2',
+			'(!obs1 ->  (X count1 = count1))', '(obs1 ->  (X count1 = count1 + 1))', 'count1<2'} 
 # @environ_section_end@
 
 # @specs_setup_section@
@@ -99,9 +101,8 @@ env_safe = set()
 #! TODO: create a function to convert this type of spec automatically
 sys_vars = {'UAV'}          # infer the rest from TS
 sys_init = {'UAV'}
-sys_prog = {'goal','home'}             # []<>goal
-sys_safe = {'!(X1o && obsX1)' } 
-#sys_safe = set()
+sys_prog = {'goal', 'home'}             # []<>goal
+sys_safe = {'((obs3 -> X !obsX3)||(obs1 -> X !obsX1))'} 
 sys_prog |= {'UAV'}
 # @specs_setup_section_end@
 
