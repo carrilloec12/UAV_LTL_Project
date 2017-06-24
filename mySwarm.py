@@ -3,9 +3,7 @@
 
     UAV motion planning with moving obstacles.
 
-    Author: Shih-Han Hung
-    Date: April 27, 2017
-    
+   
     Feature: 
         Motion planning of multiple UAVs in the environment of fixed obstacles.
 
