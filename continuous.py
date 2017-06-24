@@ -33,19 +33,19 @@ show = False
 # @dynamics_section@
 # Problem parameters
 input_bound = 1.0
-uncertainty = 0.01
+uncertainty = 0.0
 
 # Continuous state space
-cont_state_space = box2poly([[0., 3.], [0., 2.]])
+cont_state_space = box2poly([[0., 3.], [0., 3.], [0., 3.]])
 
 # Continuous dynamics
-A = np.array([[1.0, 0.], [ 0., 1.0]])
-B = np.array([[0.1, 0.], [ 0., 0.1]])
-E = np.array([[1,0], [0,1]])
+A = np.array([[1.0, 0., 0.], [ 0., 1.0, 0.], [0., 0., 1.0]])
+B = np.array([[0.5, 0., 0.], [ 0., 0.5, 0.], [0., 0., 0.5]])
+E = np.array([[1., 0., 0.], [0., 1., 0.], [0., 0., 1.]])
 
 # Available control, possible disturbances
-U = input_bound *np.array([[-1., 1.], [-1., 1.]])
-W = uncertainty *np.array([[-1., 1.], [-1., 1.]])
+U = input_bound *np.array([[-1., 1.], [-1., 1.], [-1., 1.]])
+W = uncertainty *np.array([[-1., 1.], [-1., 1.], [-1., 1.]])
 
 # Convert to polyhedral representation
 U = box2poly(U)
@@ -58,9 +58,10 @@ sys_dyn = hybrid.LtiSysDyn(A, B, E, None, U, W, cont_state_space)
 # @partition_section@
 # Define atomic propositions for relevant regions of state space
 cont_props = {}
-cont_props['home'] = box2poly([[0., 1.], [0., 1.]])
-cont_props['goal'] = box2poly([[2., 3.], [1., 2.]])
-cont_props['obsX3'] = box2poly([[0., 1.], [1., 2.]])
+cont_props['home'] = box2poly([[0., 1.], [0., 1.], [0., 1.]])
+cont_props['lot'] = box2poly([[2., 3.], [2., 3.], [2., 3.]])
+cont_props['obs'] = box2poly([[1., 2.], [1., 2.], [1., 2.]])
+
 # Compute the proposition preserving partition of the continuous state space
 cont_partition = prop2part(cont_state_space, cont_props)
 plot_partition(cont_partition) if show else None
@@ -78,22 +79,20 @@ disc_dynamics = discretize(
 plot_partition(disc_dynamics.ppp, disc_dynamics.ts,
                disc_dynamics.ppp2ts) if show else None
 
-# Environment variables and specification
-# @environ_section@
-env_vars = {'obs3': 'boolean', 'count': range(2)}  
-env_init = {'obs3', 'count = 0'}    
-env_prog = '!obs3' 
-env_safe = {'(!obs3 ->  (X count = count))', '(obs3 ->  (X count = count + 1))'}#, 'count<2'} 
-# @environ_section_end@
+# Specifications
+# Environment variables and assumptions
+env_vars = set()
+env_init = set()                # empty set
+env_prog = set()
+env_safe = set()                # empty set
 
-# @specs_setup_section@
-# Augment the system description to make it GR(1)
-#! TODO: create a function to convert this type of spec automatically
-sys_vars = {'UAV'}          # infer the rest from TS
-sys_init = {'UAV'}
-sys_prog = {'goal', 'home'}             # []<>goal
-sys_safe = {'(obs3 -> (X !obsX3))||(UAV && !obs3)'} 
-sys_prog |= {'UAV'}
+# System variables and requirements
+sys_vars = set()
+sys_init = {'home'}
+sys_prog = {'lot'}               # []<>home
+sys_safe = {'!obs'}
+#sys_prog |= {'X0reach'}
+
 # Create the specification
 specs = spec.GRSpec(env_vars, sys_vars, env_init, sys_init,
                     env_safe, sys_safe, env_prog, sys_prog)
@@ -105,16 +104,18 @@ ctrl = synth.synthesize('omega', specs,
                         sys=disc_dynamics.ts, ignore_sys_init=True)
 assert ctrl is not None, 'unrealizable'
 
-print(ctrl)
 
+
+print disc_dynamics.ppp.regions[disc_dynamics.ppp2ts.index(2)]
 
 print disc_dynamics.ppp.regions[disc_dynamics.ppp2ts.index(8)]
 
 print disc_dynamics.ppp.regions[disc_dynamics.ppp2ts.index(4)]
 
+print disc_dynamics.ppp.regions[disc_dynamics.ppp2ts.index(0)]
 # Generate a graphical representation of the controller for viewing
-# if not ctrl.save('continuous.png'):
-    # print(ctrl)
+if not ctrl.save('continuous.png'):
+    print(ctrl)
 # @synthesize_section_end@
 
 # Simulation
