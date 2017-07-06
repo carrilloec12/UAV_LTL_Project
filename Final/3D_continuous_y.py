@@ -72,7 +72,7 @@ plot_partition(cont_partition) if show else None
 # Given dynamics & proposition-preserving partition, find feasible transitions
 disc_dynamics = discretize(
     cont_partition, sys_dyn, closed_loop=True,
-    N=8, min_cell_volume=0.1, plotit=show
+    N=8, min_cell_volume=1, plotit=show
 )
 # @discretize_section_end@
 
@@ -81,44 +81,14 @@ plot_partition(disc_dynamics.ppp, disc_dynamics.ts,
                disc_dynamics.ppp2ts) if show else None
 
 env_vars = {'obs_a': range(2)}
-env_init = {'(obs_a = 1)'}
-env_prog = {'(obs_a = 2)'}
-env_safe = {'((obs_a = 1) -> (X obs_a = 2))'}
+env_init = {'(obs_a = 0)'}
+env_prog = {'(obs_a = 1)'}
+env_safe = {'((obs_a = 0) -> (X obs_a = 1))', '((obs_a = 0) -> (X obs_a = 1))'}
 
 sys_vars = set()
 sys_init = {'home'}
 sys_prog = {'goal'}               # []<>home
-sys_safe = {'((obs_a = 1) -> X (!obsX1))', '((obs_a = 1) -> X (!obsX2))'}
-# # Environment variables and specification
-# # @environ_section@
-# env_vars = {'obs1': 'boolean', 'count': range(2)}  
-# env_init = {'obs1', 'count = 0'}    
-# env_prog = '!obs1' 
-# env_safe = {'(!obs1 ->  (X count = count))', '(obs1 ->  (X count = count + 1))'}#, 'count<2'} 
-# # @environ_section_end@
-
-# # @specs_setup_section@
-# # Augment the system description to make it GR(1)
-# #! TODO: create a function to convert this type of spec automatically
-# sys_vars = {'UAV'}          # infer the rest from TS
-# sys_init = {'UAV'}
-# sys_prog = {'goal', 'home'}             # []<>goal
-# sys_safe = {'(obs1 -> (X !obsX1))||(UAV && !obs1)'} 
-# sys_prog |= {'UAV'}
-
-# # Specifications
-# # Environment variables and assumptions
-# env_vars = set()
-# env_init = set()                # empty set
-# env_prog = set()
-# env_safe = set()                # empty set
-
-# # System variables and requirements
-# sys_vars = set()
-# sys_init = {'home'}
-# sys_prog = {'lot'}               # []<>home
-# sys_safe = {'!obs'}
-# #sys_prog |= {'X0reach'}
+sys_safe = {'((obs_a = 0) -> X (!obsX1))', '((obs_a = 1) -> X (!obsX2))'}
 
 # Create the specification
 specs = spec.GRSpec(env_vars, sys_vars, env_init, sys_init,

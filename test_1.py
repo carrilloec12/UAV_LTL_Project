@@ -68,10 +68,11 @@ sys.transitions.add_comb({'X4'}, {'X3', 'X1'})
 
 # @system_labels_section@
 # Add atomic propositions to the states
-sys.atomic_propositions.add_from({'goal','obsX3','home'}) 
+sys.atomic_propositions.add_from({'goal','obsX3','home', 'obsX1'}) 
 sys.states.add('X0', ap={'home'})
 sys.states.add('X4', ap={'goal'})
 sys.states.add('X3', ap={'obsX3'})
+sys.states.add('X1', ap={'obsX1'})
 
 # @system_labels_section_end@
 
@@ -79,24 +80,34 @@ sys.states.add('X3', ap={'obsX3'})
 #sys.plot()
 
 #
-# Environment variables and specification
-# @environ_section@
-env_vars = {'obs3': 'boolean', 'count': range(2)}  
-env_init = {'obs3', 'count = 0'}    
-env_prog = '!obs3' 
-env_safe = {'(!obs3 ->  (X count = count))', '(obs3 ->  (X count = count + 1))'}#, 'count<2'} 
-# @environ_section_end@
+# # Environment variables and specification1
+# # @environ_section@
+# env_vars = {'obs3': 'boolean', 'count': range(2)}  
+# env_init = {'obs3', 'count = 0'}    
+# env_prog = '!obs3' 
+# env_safe = {'(!obs3 ->  (X count = count))', '(obs3 ->  (X count = count + 1))'}#, 'count<2'} 
+# # @environ_section_end@
 
-# @specs_setup_section@
-# Augment the system description to make it GR(1)
-#! TODO: create a function to convert this type of spec automatically
-sys_vars = {'UAV'}          # infer the rest from TS
-sys_init = {'UAV'}
-sys_prog = {'goal', 'home'}             # []<>goal
-sys_safe = {'(obs3 -> (X !obsX3))||(UAV && !obs3)'} 
-sys_prog |= {'UAV'}
+# # @specs_setup_section@
+# # Augment the system description to make it GR(1)
+# #! TODO: create a function to convert this type of spec automatically
+# sys_vars = {'UAV'}          # infer the rest from TS
+# sys_init = {'UAV'}
+# sys_prog = {'goal', 'home'}             # []<>goal
+# sys_safe = {'(obs3 -> (X !obsX3))||(UAV && !obs3)'} 
+# sys_prog |= {'UAV'}
 # @specs_setup_section_end@
 
+env_vars = {'obs_a': range(2)}
+env_init = {'(obs_a = 0)'}
+env_prog = {'(obs_a = 1)'}
+env_safe = {'((obs_a = 0) -> (X obs_a = 1))'}
+
+sys_vars = set()
+sys_init = {'home'}
+sys_prog = {'goal'}               # []<>home
+sys_safe = {'((obs_a = 0) -> X (!obsX1))', '((obs_a = 1) -> X (!obsX3))'}
+#
 # @specs_create_section@
 # Create the specification
 specs = spec.GRSpec(env_vars, sys_vars, env_init, sys_init,

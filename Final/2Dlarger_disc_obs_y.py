@@ -74,37 +74,34 @@ sys.transitions.add_comb({'X8'}, {'X5', 'X7'})
 
 # @system_labels_section@
 # Add atomic propositions to the states
-sys.atomic_propositions.add_from({'goal','obsX1','home','obsX3'})
+sys.atomic_propositions.add_from({'goal','obsX1','home','obsX5','obsX6'})
 sys.states.add('X0', ap={'home'})
 sys.states.add('X8', ap={'goal'})
 sys.states.add('X1', ap={'obsX1'})
-sys.states.add('X3', ap={'obsX3'})
+sys.states.add('X5', ap={'obsX5'})
+sys.states.add('X6', ap={'obsX6'})
 # @system_labels_section_end@
 
 # if IPython and Matplotlib available
 #sys.plot()
 
 #
-
 #
-# Environment variables and specification
+# Environment variables and specification1
 # @environ_section@
-env_vars = {'obs3': 'boolean', 'obs1': 'boolean', 'count1': range(3), 'count3': range(3)}  
-env_init = {'obs3', 'count1 = 0', '!obs1', 'count3 = 0'}    
-env_prog = {'!obs3', 'obs1'} 
-env_safe = {'(!obs3 ->  (X count3 = count3))', '(obs3 ->  (X count3 = count3 + 1))', 'count3<2',
-			'(!obs1 ->  (X count1 = count1))', '(obs1 ->  (X count1 = count1 + 1))', 'count1<2'} 
-# @environ_section_end@
+env_vars = {'obs_a': range(3)}
+env_init = {'(obs_a = 0)'}
+env_prog = {'(obs_a = 2)'}
+env_safe = {'((obs_a = 0) -> (X obs_a = 1))', '((obs_a = 1) -> (X obs_a = 2))'}
 
-# @specs_setup_section@
-# Augment the system description to make it GR(1)
-#! TODO: create a function to convert this type of spec automatically
-sys_vars = {'UAV'}          # infer the rest from TS
-sys_init = {'UAV'}
-sys_prog = {'goal', 'home'}             # []<>goal
-sys_safe = {'(obs3 -> X !obsX3)', '(obs1 -> X !obsX1)'} 
-sys_prog |= {'UAV'}
+
+sys_vars = set()
+sys_init = {'home'}
+sys_prog = {'goal'}               # []<>home
+sys_safe = {'((obs_a = 0) -> X (!obsX1))', '((obs_a = 1) -> X (!obsX6))', '((obs_a = 2) -> X (!obsX5))'}
 # @specs_setup_section_end@
+#
+
 
 # @specs_create_section@
 # Create the specification

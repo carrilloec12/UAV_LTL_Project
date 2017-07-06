@@ -21,6 +21,16 @@ count = number of steps that obs has been true.
 import logging
 
 from tulip import transys, spec, synth
+from tulip.interfaces import gr1c
+from tulip.interfaces import gr1py
+from tulip.interfaces import jtlv
+from tulip.interfaces import omega as omega_int
+try:
+    from tulip.interfaces import slugs
+except ImportError:
+    slugs = None
+from tulip.spec import GRSpec
+from tulip import transys
 # @import_section_end@
 
 
@@ -123,9 +133,9 @@ sys2.states.add('X8', ap={'goal'})
 #
 ts = {}
 ts['UAV'] = sys 
-#ts['UAV2'] = sys2
+ts['UAV2'] = sys2
 ts['UAV'].owner = 'sys'
-#ts['UAV2'].owner = 'sys'
+ts['UAV2'].owner = 'sys'
 
 
 
@@ -166,48 +176,97 @@ specs = spec.GRSpec(env_vars, sys_vars, env_init, sys_init,
 # @synthesize@
 # Moore machines
 # controller reads `env_vars, sys_vars`, but not next `env_vars` values
-specs.moore = True
-# synthesizer should find initial system values that satisfy
-# `env_init /\ sys_init` and work, for every environment variable
-# initial values that satisfy `env_init`.
-# specs, ts=None, ignore_init=None,
-#                     bool_actions=None, solver='gr1c'
-#specs.qinit = '\E \A'
-# 
 
-boolActions = set() #{'UAV','UAV2'}
-ignoreInit = set() #{'UAV','UAV2'}
+# # synthesizer should find initial system values that satisfy
+# # `env_init /\ sys_init` and work, for every environment variable
+# # initial values that satisfy `env_init`.
+# # specs, ts=None, ignore_init=None,
+# #                     bool_actions=None, solver='gr1c'
+# #specs.qinit = '\E \A'
+# # 
 
+bool_actions = {'UAV','UAV2'}
+ignore_init = {'UAV','UAV2'}
+
+assert isinstance(ts, dict)
+print "Beginning process"
+print isinstance(ts, dict)
 
 for name, t in ts.iteritems():
-    #assert isinstance(t, transys.FiniteTransitionSystem)
-    print name
-    print t
+	print "name", name
+	assert isinstance(t, transys.FiniteTransitionSystem)
+	ignore = name in ignore_init
+	print "ignore", ignore
+	bool_act = name in bool_actions
+	print "bool", bool_act
+	statevar = name
+	print "statevar", statevar
+	if t.owner == 'sys':
+		print "here"
+		specs |= synth.sys_to_spec(t, ignore, statevar, bool_actions=bool_act)
+		print specs
+	elif t.owner == 'env':
+		print "here 2"
+		specs |= synth.env_to_spec(t, ignore, statevar, bool_actions=bool_act)
 
-    print name in ignoreInit
+specs.moore = False
+specs.plus_one = False
+specs.sys_init = False
 
-    # print ignore 
+solver = 'gr1c'
+if solver == 'gr1c':
+	print "gr1c"
+	ctrl = gr1c.synthesize(specs)
+elif solver == 'slugs':
+    if slugs is None:
+        raise ValueError('Import of slugs interface failed. ' +
+                         'Please verify installation of "slugs".')
+    ctrl = slugs.synthesize(specs)
+elif solver == 'jtlv':
+    ctrl = jtlv.synthesize(specs)
+else:
+    raise Exception('Unknown solver: ' + str(solver) + '. '
+                    'Available solvers: "jtlv", "gr1c", and "slugs"')
+try:
+    logger.debug('Mealy machine has: n = ' +
+                 str(len(ctrl.states)) + ' states.')
+except:
+    logger.debug('No Mealy machine returned.')
+# no controller found ?
+# counterstrategy not constructed by synthesize
+# if not isinstance(ctrl, transys.MealyMachine):
+#     return None
+# ctrl.remove_deadends()
 
-    print name in boolActions
+# for name, t in ts.iteritems():
+#     #assert isinstance(t, transys.FiniteTransitionSystem)
+#     print name
+#     print t
+
+#     print name in ignoreInit
+
+#     # print ignore 
+
+#     print name in boolActions
     
-    # print ignore 
+#     # print ignore 
 
-ctrl = synth.synthesize_many(specs, ts, ignoreInit, boolActions, solver='gr1c')
+# ctrl = synth.synthesize_many(specs, ts, ignoreInit, boolActions, solver='gr1c')
 
 
-#ctrl = synth.synthesize('omega', specs, sys=sys)
-#assert ctrl is not None, 'unrealizable'
-# @synthesize_end@
+# #ctrl = synth.synthesize('omega', specs, sys=sys)
+# #assert ctrl is not None, 'unrealizable'
+# # @synthesize_end@
 
-#
-# Generate a graphical representation of the controller for viewing,
-# or a textual representation if pydot is missing.
-#
-# @plot_print@
-#if not ctrl.save('discrete.png'):
-#    print(ctrl)
-# @plot_print_end@
+# #
+# # Generate a graphical representation of the controller for viewing,
+# # or a textual representation if pydot is missing.
+# #
+# # @plot_print@
+# #if not ctrl.save('discrete.png'):
+# #    print(ctrl)
+# # @plot_print_end@
 
-# print ctrl 
-# a = ctrl.transitions.find(from_states=[0], to_states=[1])
-# print a 
+# # print ctrl 
+# # a = ctrl.transitions.find(from_states=[0], to_states=[1])
+# # print a 
