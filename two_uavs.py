@@ -84,8 +84,8 @@ sys.transitions.add_comb({'X8'}, {'X5', 'X7'})
 
 # @system_labels_section@
 # Add atomic propositions to the states
-sys.atomic_propositions.add_from({'goal'})
-# sys.states.add('X0', ap={'home'})
+sys.atomic_propositions.add_from({'goal', 'home'})
+sys.states.add('X0', ap={'home'})
 sys.states.add('X8', ap={'goal'})
 # sys.states.add('X1', ap={'obsX1'})
 # sys.states.add('X3', ap={'obsX3'})
@@ -118,8 +118,8 @@ sys2.transitions.add_comb({'X8'}, {'X5', 'X7'})
 
 # @system_labels_section@
 # Add atomic propositions to the states
-sys2.atomic_propositions.add_from({'goal'})
-# sys.states.add('X0', ap={'home'})
+sys2.atomic_propositions.add_from({'goal', 'home'})
+sys2.states.add('X0', ap={'home'})
 sys2.states.add('X8', ap={'goal'})
 
 
@@ -142,23 +142,18 @@ ts['UAV2'].owner = 'sys'
 #
 # Environment variables and specification
 # @environ_section@
-env_vars = {}  
-env_init = {}    
-env_prog = {} 
-env_safe = set() 
+env_vars = {'park'}
+env_init = set()
+env_prog = '!park'
+env_safe = set()
 
-# {'(!obs3 ->  (X count3 = count3))', '(obs3 ->  (X count3 = count3 + 1))', 'count3<2',
-# 			'(!obs1 ->  (X count1 = count1))', '(obs1 ->  (X count1 = count1 + 1))', 'count1<2'} 
-# @environ_section_end@
-
-# @specs_setup_section@
-# Augment the system description to make it GR(1)
-#! TODO: create a function to convert this type of spec automatically
-sys_vars = {'X0reach'}          # infer the rest from TS
+# System specification
+sys_vars = {'X0reach'}
 sys_init = {'X0reach'}
-sys_prog = {'goal'}             # []<>goal
-sys_safe = set() #{'((obs3 -> X !obsX3)||(obs1 -> X !obsX1))'} 
-sys_prog |= set() #{'UAV'}
+sys_prog = {'home'}
+sys_safe = {'(X (X0reach) <-> goal) || (X0reach && !goal)'}
+sys_prog |= {'X0reach'}
+
 # @specs_setup_section_end@
 
 # @specs_create_section@
@@ -201,6 +196,7 @@ for name, t in ts.iteritems():
 	print "bool", bool_act
 	statevar = name
 	print "statevar", statevar
+	print t
 	if t.owner == 'sys':
 		print "here"
 		specs |= synth.sys_to_spec(t, ignore, statevar, bool_actions=bool_act)
@@ -209,29 +205,36 @@ for name, t in ts.iteritems():
 		print "here 2"
 		specs |= synth.env_to_spec(t, ignore, statevar, bool_actions=bool_act)
 
+
 specs.moore = False
 specs.plus_one = False
-specs.sys_init = False
+specs.qinit = '\A \E'
+# specs.sys_init = False
 
-solver = 'gr1c'
-if solver == 'gr1c':
-	print "gr1c"
-	ctrl = gr1c.synthesize(specs)
-elif solver == 'slugs':
-    if slugs is None:
-        raise ValueError('Import of slugs interface failed. ' +
-                         'Please verify installation of "slugs".')
-    ctrl = slugs.synthesize(specs)
-elif solver == 'jtlv':
-    ctrl = jtlv.synthesize(specs)
-else:
-    raise Exception('Unknown solver: ' + str(solver) + '. '
-                    'Available solvers: "jtlv", "gr1c", and "slugs"')
-try:
-    logger.debug('Mealy machine has: n = ' +
-                 str(len(ctrl.states)) + ' states.')
-except:
-    logger.debug('No Mealy machine returned.')
+ctrl = gr1c.synthesize(specs)
+
+print "here 2"
+print gr1c.synthesize(specs)
+
+# solver = 'gr1c'
+# if solver == 'gr1c':
+# 	print "gr1c"
+# 	ctrl = gr1c.synthesize(specs)
+# elif solver == 'slugs':
+#     if slugs is None:
+#         raise ValueError('Import of slugs interface failed. ' +
+#                          'Please verify installation of "slugs".')
+#     ctrl = slugs.synthesize(specs)
+# elif solver == 'jtlv':
+#     ctrl = jtlv.synthesize(specs)
+# else:
+#     raise Exception('Unknown solver: ' + str(solver) + '. '
+#                     'Available solvers: "jtlv", "gr1c", and "slugs"')
+# try:
+#     logger.debug('Mealy machine has: n = ' +
+#                  str(len(ctrl.states)) + ' states.')
+# except:
+#     logger.debug('No Mealy machine returned.')
 # no controller found ?
 # counterstrategy not constructed by synthesize
 # if not isinstance(ctrl, transys.MealyMachine):
