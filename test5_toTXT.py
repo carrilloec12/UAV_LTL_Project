@@ -128,9 +128,10 @@ with open("out.txt","w") as f:
 	while counter <= 20:
 	        	nv,ns = random.choice(ctrl.adj[cs].items())
 	        	pos = str(ns[0]['loc'])
+	        	print(pos)
 	        	print(disc_dynamics.ppp.regions[disc_dynamics.ppp2ts.index(int(pos))])
 	        	f.write(
-	        		disc_dynamics.ppp.regions[disc_dynamics.ppp2ts.index(int(pos))])
+	        		str(disc_dynamics.ppp.regions[disc_dynamics.ppp2ts.index(int(pos))]))
 	        	cs = nv
 
 	        	counter += 1
