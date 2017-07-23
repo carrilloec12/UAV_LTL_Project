@@ -2,12 +2,12 @@
 """
 UAV collision avoidance:
 
-Initially, obstacle is put in X1. Then, obstacle is removed from X1 and changed to X4.
-UAV is required to move from X0 to X4 and back from X4 to X0 infinitely often.
+Initially, obstacle is located in X1. Then, obstacle is removed from X1.
+UAV is required to move from X0 to X3 and back from X3 to X0 infinitely often.
 
 UAV goes to goal and comes back home.
 
-count = number of steps that obs has been true.
+count = number of steps that obstacle in X1 has been true.
 
 """
 # RMM, 20 Jul 2013
@@ -43,7 +43,7 @@ logging.getLogger('tulip.interfaces.omega').setLevel(logging.WARNING)
 #
 #    
 #     +----+----+
-#     | X3 | X4 |
+#     | X2 | X3 |
 #     +----+----+
 #     | X0 | X1 |
 #     +----+----+
@@ -53,25 +53,24 @@ logging.getLogger('tulip.interfaces.omega').setLevel(logging.WARNING)
 sys = transys.FTS()
 
 # Define the states of the system
-sys.states.add_from(['X0','X1','X2','X3','X4'])
+sys.states.add_from(['X0','X1','X2','X3'])
 sys.states.initial.add('X0')    # start in state X0
 
 # Define the allowable transitions
 #! TODO (IF): can arguments be a singleton instead of a list?
 #! TODO (IF): can we use lists instead of sets?
 #!   * use optional flag to allow list as label
-sys.transitions.add_comb({'X0'}, {'X1', 'X3'})
-sys.transitions.add_comb({'X1'}, {'X0', 'X4'})
-sys.transitions.add_comb({'X3'}, {'X0', 'X4'})
-sys.transitions.add_comb({'X4'}, {'X3', 'X1'})
+sys.transitions.add_comb({'X0'}, {'X1', 'X2'})
+sys.transitions.add_comb({'X1'}, {'X0', 'X3'})
+sys.transitions.add_comb({'X2'}, {'X0', 'X3'})
+sys.transitions.add_comb({'X3'}, {'X1', 'X2'})
 # @system_dynamics_section_end@
 
 # @system_labels_section@
 # Add atomic propositions to the states
-sys.atomic_propositions.add_from({'goal','obsX3','home', 'obsX1'}) 
+sys.atomic_propositions.add_from({'goal','home', 'obsX1'}) 
 sys.states.add('X0', ap={'home'})
-sys.states.add('X4', ap={'goal'})
-sys.states.add('X3', ap={'obsX3'})
+sys.states.add('X3', ap={'goal'})
 sys.states.add('X1', ap={'obsX1'})
 
 # @system_labels_section_end@
@@ -82,20 +81,20 @@ sys.states.add('X1', ap={'obsX1'})
 #
 # Environment variables and specification1
 # @environ_section@
-env_vars = {'obs3': 'boolean', 'count': range(2)}  
-env_init = {'obs3', 'count = 0'}    
-env_prog = '!obs3' 
-env_safe = {'(!obs3 ->  (X count = count))', '(obs3 ->  (X count = count + 1))'}#, 'count<2'} 
+env_vars = {'obs1': 'boolean', 'count': range(2)}  
+env_init = {'obs1', 'count = 0'}    
+env_prog = '!obs1' 
+env_safe = {'(!obs1 ->  (X count = count))', '(obs1 ->  (X count = count + 1))'}
 # @environ_section_end@
 
 # @specs_setup_section@
 # Augment the system description to make it GR(1)
 #! TODO: create a function to convert this type of spec automatically
-sys_vars = {'UAV'}          # infer the rest from TS
-sys_init = {'UAV'}
+sys_vars = set() #{'UAV'}         # infer the rest from TS
+sys_init = {'home'}
 sys_prog = {'goal', 'home'}             # []<>goal
-sys_safe = {'(obs3 -> (X !obsX3))||(UAV && !obs3)'} 
-sys_prog |= {'UAV'}
+sys_safe = {'(obs1 -> (X !obsX1))'} #||(UAV && !obs1)'} 
+sys_prog |= set() #{'UAV'}
 # @specs_setup_section_end@
 #
 # @specs_create_section@
@@ -121,6 +120,14 @@ specs.qinit = '\E \A'
 ctrl = synth.synthesize('omega', specs, sys=sys)
 assert ctrl is not None, 'unrealizable'
 # @synthesize_end@
+
+# Mealy machines
+specs.moore = False
+specs.plus_one = False
+specs.qinit = '\A \E'
+
+ctrl = synth.synthesize('gr1c', specs, sys=sys)
+
 
 #
 # Generate a graphical representation of the controller for viewing,

@@ -2,8 +2,8 @@
 """
 UAV collision avoidance:
 
-Initially, obstacle is put in X1. Then, obstacle is removed from X1 and changed to X4.
-UAV is required to move from X0 to X4 and back from X4 to X0 infinitely often.
+Initially, obstacle is put in X1. Then, obstacle is removed from X1 and changed to X2.
+UAV is required to move from X0 to X3 and back from X3 to X0 infinitely often.
 
 UAV goes to goal and comes back home.
 
@@ -43,7 +43,7 @@ logging.getLogger('tulip.interfaces.omega').setLevel(logging.WARNING)
 #
 #    
 #     +----+----+
-#     | X3 | X4 |
+#     | X2 | X3 |
 #     +----+----+
 #     | X0 | X1 |
 #     +----+----+
@@ -60,18 +60,18 @@ sys.states.initial.add('X0')    # start in state X0
 #! TODO (IF): can arguments be a singleton instead of a list?
 #! TODO (IF): can we use lists instead of sets?
 #!   * use optional flag to allow list as label
-sys.transitions.add_comb({'X0'}, {'X1', 'X3'})
-sys.transitions.add_comb({'X1'}, {'X0', 'X4'})
-sys.transitions.add_comb({'X3'}, {'X0', 'X4'})
-sys.transitions.add_comb({'X4'}, {'X3', 'X1'})
+sys.transitions.add_comb({'X0'}, {'X1', 'X2'})
+sys.transitions.add_comb({'X1'}, {'X0', 'X3'})
+sys.transitions.add_comb({'X2'}, {'X0', 'X3'})
+sys.transitions.add_comb({'X3'}, {'X1', 'X2'})
 # @system_dynamics_section_end@
 
 # @system_labels_section@
 # Add atomic propositions to the states
-sys.atomic_propositions.add_from({'goal','obsX3','home', 'obsX1'}) 
+sys.atomic_propositions.add_from({'goal','obsX1','home', 'obsX2'}) 
 sys.states.add('X0', ap={'home'})
-sys.states.add('X4', ap={'goal'})
-sys.states.add('X3', ap={'obsX3'})
+sys.states.add('X3', ap={'goal'})
+sys.states.add('X2', ap={'obsX2'})
 sys.states.add('X1', ap={'obsX1'})
 
 # @system_labels_section_end@
@@ -82,15 +82,15 @@ sys.states.add('X1', ap={'obsX1'})
 #
 # # Environment variables and specifications
 
-env_vars = {'obs_a': range(2)}
-env_init = {'(obs_a = 0)'}
-env_prog = {'(obs_a = 1)'}
-env_safe = {'((obs_a = 0) -> (X obs_a = 1))'}
+env_vars = {'obs': range(2)}
+env_init = {'(obs = 0)'}
+env_prog = {'(obs = 1)'}
+env_safe = {'((obs = 0) -> (X obs = 1))'}
 
 sys_vars = set()
 sys_init = {'home'}
-sys_prog = {'goal'}               # []<>home
-sys_safe = {'((obs_a = 0) -> X (!obsX1))', '((obs_a = 1) -> X (!obsX3))'}
+sys_prog = {'goal', 'home'}               # []<>home
+sys_safe = {'((obs = 0) -> X (!obsX1))', '((obs = 1) -> X (!obsX2))'}
 #
 # @specs_create_section@
 # Create the specification
