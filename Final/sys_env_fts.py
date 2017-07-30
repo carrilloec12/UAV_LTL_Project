@@ -8,7 +8,7 @@ logging.basicConfig(filename='sys_and_env_ts.log',
 logger = logging.getLogger(__name__)
 
 from tulip import transys, spec, synth
-
+import tomatlab
 # We label the states using the following picture
 #
 #     +----+----+----+
@@ -91,8 +91,10 @@ specs = spec.GRSpec(sys_vars=sys_vars, sys_init=sys_init,
 specs.moore = False
 specs.qinit = '\A \E'
 ctrl = synth.synthesize('omega', specs, sys=sys, env=env0)
-ctrl.save('sys_and_env_ts0.pdf')
-print ctrl 
+#ctrl.save('sys_and_env_ts0.pdf')
+
+print specs
+#print ctrl 
 
 # """Park as an env action
 # """
@@ -120,3 +122,6 @@ print ctrl
 # ctrl.save('sys_and_env_ts1.pdf')
 # env1.save('env1.pdf')
 # logger.info(ctrl)
+
+# Generate a MATLAB script that generates a Mealy Machine
+#tomatlab.export('robot_discrete.mat', ctrl)

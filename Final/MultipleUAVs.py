@@ -10,58 +10,57 @@ import sys
 sys.path.append('../')
 #import tomatlab
 
+# We label the states using the following picture
+#
+
+#     +----+----+
+#     | X2 | X3 | 
+#     +----+----+
+#     | X0 | X1 | 
+#     +----+----+
+
 # UAV 1 
 sys = transys.FTS()
 sys.owner = 'sys'
 
 # Define the states of the system
-sys.states.add_from(['X0','X1','X2','X3','X4','X5','X6','X7','X8'])
+sys.states.add_from(['X0','X1','X2','X3'])
 sys.states.initial.add('X0')    # start in state X0
 
 # Define the allowable transitions
-sys.transitions.add_comb({'X0'}, {'X1', 'X3'})
-sys.transitions.add_comb({'X1'}, {'X0', 'X4', 'X2'})
-sys.transitions.add_comb({'X2'}, {'X1', 'X5'})
-sys.transitions.add_comb({'X3'}, {'X0', 'X4', 'X6'})
-sys.transitions.add_comb({'X4'}, {'X3', 'X1', 'X5', 'X7'})
-sys.transitions.add_comb({'X5'}, {'X4', 'X2', 'X8'})
-sys.transitions.add_comb({'X6'}, {'X7', 'X3'})
-sys.transitions.add_comb({'X7'}, {'X4', 'X6', 'X8'})
-sys.transitions.add_comb({'X8'}, {'X5', 'X7'})
+sys.transitions.add_comb({'X0'}, {'X1', 'X2'})
+sys.transitions.add_comb({'X1'}, {'X0', 'X3'})
+sys.transitions.add_comb({'X2'}, {'X0', 'X3'})
+sys.transitions.add_comb({'X3'}, {'X1', 'X2'})
 
 # Add atomic propositions to the states
 sys.atomic_propositions.add_from({'home', 'goal'})
 sys.states.add('X0', ap={'home'})
-sys.states.add('X8', ap={'goal'})
+sys.states.add('X3', ap={'goal'})
 
 # UAV 2
 sys2 = transys.FTS()
 sys2.owner = 'sys'
 
 # Define the states of the system
-sys2.states.add_from(['X0','X1','X2','X3','X4','X5','X6','X7','X8'])
-sys2.states.initial.add('X6')    # start in state X6
+sys2.states.add_from(['X0','X1','X2','X3'])
+sys2.states.initial.add('X2')    # start in state X6
 
 # Define the allowable transitions
 #! TODO (IF): can arguments be a singleton instead of a list?
 #! TODO (IF): can we use lists instead of sets?
 #!   * use optional flag to allow list as label
-sys2.transitions.add_comb({'X0'}, {'X1', 'X3'})
-sys2.transitions.add_comb({'X1'}, {'X0', 'X4', 'X2'})
-sys2.transitions.add_comb({'X2'}, {'X1', 'X5'})
-sys2.transitions.add_comb({'X3'}, {'X0', 'X4', 'X6'})
-sys2.transitions.add_comb({'X4'}, {'X3', 'X1', 'X5', 'X7'})
-sys2.transitions.add_comb({'X5'}, {'X4', 'X2', 'X8'})
-sys2.transitions.add_comb({'X6'}, {'X7', 'X3'})
-sys2.transitions.add_comb({'X7'}, {'X4', 'X6', 'X8'})
-sys2.transitions.add_comb({'X8'}, {'X5', 'X7'})
+sys2.transitions.add_comb({'X0'}, {'X1'})
+sys2.transitions.add_comb({'X1'}, {'X0', 'X3'})
+sys2.transitions.add_comb({'X2'}, {'X3'})
+sys2.transitions.add_comb({'X3'}, {'X1', 'X2'})
 # @system_dynamics_section_end@
 
 # @system_labels_section@
 # Add atomic propositions to the states
 sys2.atomic_propositions.add_from({'goal', 'home'})
 sys2.states.add('X0', ap={'home'})
-sys2.states.add('X8', ap={'goal'})
+sys2.states.add('X3', ap={'goal'})
 
 
 # Environment variables and specification
@@ -71,16 +70,17 @@ env_prog = '!park'
 env_safe = set()
 
 # System specification
-sys_vars = {'X0reach'}
-sys_init = {'X0reach'}
+sys_vars = set()
+sys_init = set()
 sys_prog = {'home'}
-sys_safe = {'(X (X0reach) <-> goal) || (X0reach && !park)'}
-sys_prog |= {'X0reach'}
+sys_safe = set()
+sys_prog |= {'goal'}
 
 # Create the specification
 specs = spec.GRSpec(env_vars, sys_vars, env_init, sys_init,
                     env_safe, sys_safe, env_prog, sys_prog)
 
+print "Specs 1"
 print specs 
 specs.moore = False
 specs.plus_one = False
@@ -90,10 +90,10 @@ specs.qinit = '\A \E'
 # Controller synthesis for each individual UAV
 # UAV 1
 ctrl = synth.synthesize('gr1c', specs, sys=sys)
-print ctrl 
+#print ctrl 
 # UAV 2
 ctrl = synth.synthesize('gr1c', specs, sys=sys2)
-print ctrl 
+#print ctrl 
 
 # Controller synthesis for both UAVs
 ts = {}
@@ -114,37 +114,55 @@ specs.qinit = '\A \A'
 
 assert isinstance(ts, dict)
 for name, t in ts.iteritems():
-	print "iteration*******"
-	print t 
+	#print "iteration*******"
+	#print t 
 	assert isinstance(t, transys.FiniteTransitionSystem)
 	ignore = name in ignore_init
 	bool_act = name in bool_actions
 	statevar = name
 	
-	print t
+	#print t
 	if t.owner == 'sys':
 		# print "here"
 		# print "name", name
 		# print "ignore", ignore
 		# print "bool", bool_act
 		# print "statevar", statevar
-        
+		# print "Iteration Begin"
+		# a =  synth.sys_to_spec(t, ignore, statevar, bool_actions=bool_act)
+		# print a
+		# a |= '&& [](X(!(UAV = UAV2)))'
+		# print a
+		# print "Iteration End"
 		specs |= synth.sys_to_spec(t, ignore, statevar, bool_actions=bool_act)
-		print specs
+		#print specs
 	elif t.owner == 'env':
 		#print "here 2"
 		specs |= synth.env_to_spec(t, ignore, statevar, bool_actions=bool_act)
-		print specs
+		#print specs
 
-specs.moore = False
-specs.plus_one = False
-specs.qinit = '\A \E'
+# print "Results"
+# print specs
+# specs |= '&& [](X(!(UAV = UAV2)))'
+# print specs
+specs.moore = True
+# synthesizer should find initial system values that satisfy
+# `env_init /\ sys_init` and work, for every environment variable
+# initial values that satisfy `env_init`.
+specs.qinit = '\E \A'
+ctrl = synth.synthesize('omega', specs)
+assert ctrl is not None, 'unrealizable'
+
+print ctrl
+# specs.moore = False
+# specs.plus_one = False
+# specs.qinit = '\A \E'
 
 
-ctrl = gr1c.synthesize(specs)
-print "ctrl", ctrl 
-if not isinstance(ctrl, transys.MealyMachine):
-	print None
+# ctrl = gr1c.synthesize(specs)
+# print "ctrl", ctrl 
+# if not isinstance(ctrl, transys.MealyMachine):
+# 	print None
 
 #ctrl.remove_deadends()
 

@@ -58,10 +58,10 @@ sys_dyn = hybrid.LtiSysDyn(A, B, E, None, U, W, cont_state_space)
 # @partition_section@
 # Define atomic propositions for relevant regions of state space
 cont_props = {}
-cont_props['home'] = box2poly([[0., 1.], [0., 1.], [0., 1.]])
-cont_props['goal'] = box2poly([[2., 3.], [2., 3.], [2., 3.]])
-cont_props['obsX1'] = box2poly([[0., 1.], [2., 3.], [0., 1.]]) 
-cont_props['obsX2'] = box2poly([[1., 2.], [1., 2.], [1., 2.]])
+cont_props['home'] = box2poly([[0., 1.], [0., 1.], [0., 1.]]) #X0
+cont_props['goal'] = box2poly([[2., 3.], [2., 3.], [2., 3.]]) 
+cont_props['obsX1'] = box2poly([[0., 1.], [2., 3.], [0., 1.]]) #X1
+cont_props['obsX2'] = box2poly([[1., 2.], [1., 2.], [1., 2.]]) #
 
 # Compute the proposition preserving partition of the continuous state space
 cont_partition = prop2part(cont_state_space, cont_props)
@@ -82,7 +82,7 @@ plot_partition(disc_dynamics.ppp, disc_dynamics.ts,
 
 env_vars = {'obs_a': range(2)}
 env_init = {'(obs_a = 0)'}
-env_prog = {'(obs_a = 1)'}
+env_prog = set()
 env_safe = {'((obs_a = 0) -> (X obs_a = 1))', '((obs_a = 0) -> (X obs_a = 1))'}
 
 sys_vars = set()
@@ -101,18 +101,20 @@ ctrl = synth.synthesize('omega', specs,
                         sys=disc_dynamics.ts, ignore_sys_init=True)
 assert ctrl is not None, 'unrealizable'
 
+#print ctrl 
 
+print disc_dynamics.ppp.regions
 
-print disc_dynamics.ppp.regions[disc_dynamics.ppp2ts.index(2)]
+#print disc_dynamics.ppp.regions[disc_dynamics.ppp2ts.index(0)]
 
-print disc_dynamics.ppp.regions[disc_dynamics.ppp2ts.index(8)]
+#print disc_dynamics.ppp.regions[disc_dynamics.ppp2ts.index(8)]
 
-print disc_dynamics.ppp.regions[disc_dynamics.ppp2ts.index(4)]
+print disc_dynamics.ppp.regions[disc_dynamics.ppp2ts.index(1)]
 
-print disc_dynamics.ppp.regions[disc_dynamics.ppp2ts.index(0)]
+# print disc_dynamics.ppp.regions[disc_dynamics.ppp2ts.index(0)]
 # Generate a graphical representation of the controller for viewing
-if not ctrl.save('continuous.png'):
-    print(ctrl)
+# if not ctrl.save('continuous.png'):
+#     print(ctrl)
 # @synthesize_section_end@
 
 # Simulation

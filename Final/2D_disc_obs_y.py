@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 """
+Test Case #1:
+
 UAV collision avoidance:
 
-Initially, obstacle is put in X1. Then, obstacle is removed from X1 and changed to X2.
-UAV is required to move from X0 to X3 and back from X3 to X0 infinitely often.
-
+Initially, obstacle is put in X1. Then, obstacle is removed from X1 and changed to X2 and remains there.
+UAV is required to move from X0 to X3 and back from X3 to X0 infinitely often without colliding with the obstacle.
 UAV goes to goal and comes back home.
 
-count = number of steps that obs has been true.
 
 """
 # RMM, 20 Jul 2013
@@ -85,7 +85,7 @@ sys.states.add('X1', ap={'obsX1'})
 env_vars = {'obs': range(2)}
 env_init = {'(obs = 0)'}
 env_prog = {'(obs = 1)'}
-env_safe = {'((obs = 0) -> (X obs = 1))'}
+env_safe = {'((obs = 0) -> (X obs = 1))', '((obs = 1) -> (X obs = 1))'}
 
 sys_vars = set()
 sys_init = {'home'}

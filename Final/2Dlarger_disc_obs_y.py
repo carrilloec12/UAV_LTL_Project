@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 """
-UAV collision avoidance:
 
-Initially, obstacle is put in X1. Then, obstacle is removed from X1 and changed to X4.
-UAV is required to move from X0 to X4 and back from X4 to X0 infinitely often.
+Test Case #2:
+
+There is one obstacle. Initially, the obstacle is put in X1 and can transition to X1, X5 or X6.
+UAV is required to move from X0 to X8 and back from X8 to X0 infinitely often.
 
 UAV goes to goal and comes back home.
-
-count = number of steps that obs has been true.
 
 """
 # RMM, 20 Jul 2013
@@ -92,12 +91,12 @@ sys.states.add('X6', ap={'obsX6'})
 env_vars = {'obs_a': range(3)}
 env_init = {'(obs_a = 0)'}
 env_prog = {'(obs_a = 2)'}
-env_safe = {'((obs_a = 0) -> (X obs_a = 1))', '((obs_a = 1) -> (X obs_a = 2))'}
+env_safe = {'((obs_a = 0) -> (X obs_a = 1))', '((obs_a = 1) -> (X obs_a = 2))', '((obs_a = 2) -> (X obs_a = 0))'}
 
 
 sys_vars = set()
 sys_init = {'home'}
-sys_prog = {'goal'}               # []<>home
+sys_prog = {'goal', 'home'}               # []<>home
 sys_safe = {'((obs_a = 0) -> X (!obsX1))', '((obs_a = 1) -> X (!obsX6))', '((obs_a = 2) -> X (!obsX5))'}
 # @specs_setup_section_end@
 #
