@@ -41,9 +41,11 @@ sys.transitions.add_comb({'X3'}, {'X0','X2'})
 
 
 # Add atomic propositions to the states
-sys.atomic_propositions.add_from({'home', 'goal'})
-sys.states.add('X3', ap={'home'})
-sys.states.add('X2', ap={'goal'})
+sys.atomic_propositions.add_from({'obsX0', 'obsX1', 'obsX2', 'obsX3'})
+sys.states.add('X0', ap={'obsX0'})
+sys.states.add('X1', ap={'obsX1'})
+sys.states.add('X2', ap={'obsX2'})
+sys.states.add('X3', ap={'obsX3'})
 
 # UAV 2
 sys2 = transys.FTS()
@@ -65,23 +67,40 @@ sys2.transitions.add_comb({'X3'}, {'X1', 'X2'})
 
 # @system_labels_section@
 # Add atomic propositions to the states
-sys2.atomic_propositions.add_from({'goal', 'home'})
-sys2.states.add('X0', ap={'home'})
-sys2.states.add('X3', ap={'goal'})
+sys2.atomic_propositions.add_from({'obsX0', 'obsX1', 'obsX2', 'obsX3'})
+sys2.states.add('X0', ap={'obsX0'})
+sys2.states.add('X1', ap={'obsX1'})
+sys2.states.add('X2', ap={'obsX2'})
+sys2.states.add('X3', ap={'obsX3'})
+
+env0 = transys.FTS()
+env0.owner = 'env'
+env0.states.add_from({'X0', 'X1', 'X2', 'X3'})
+env0.states.initial.add('X0')
+
+# env0.atomic_propositions.add_from({'obsX0', 'obsX1', 'obsX2', 'obsX3'}) #, 'obsX1', 'obsX2', 'obsX3'
+# env0.states.add('X0', ap={'obsX0'})
+# env0.states.add('X1', ap={'obsX1'})
+# env0.states.add('X2', ap={'obsX2'})
+# env0.states.add('X3', ap={'obsX3'})
+
+env0.transitions.add_from([
+    ('X0', 'X1'), ('X1', 'X2'), ('X2', 'X3'), ('X3', 'X0')
+])
 
 
 # Environment variables and specification
-env_vars = {'park'}
-env_init = {'park'}
-env_prog = '!park'
+env_vars = set()
+env_init = set()
+env_prog = ''
 env_safe = set()
 
 # System specification
 sys_vars = set()
 sys_init = set()
-sys_prog = {'home','goal'}
+sys_prog = set()
 sys_safe = set()
-sys_prog |= {'goal'}
+sys_prog |= {'obsX3'}
 
 # Create the specification
 specs = spec.GRSpec(env_vars, sys_vars, env_init, sys_init,
@@ -94,16 +113,16 @@ specs.plus_one = False
 specs.qinit = '\A \E'
 
 
-# Controller synthesis for each individual UAV
-# UAV 1
-ctrl = synth.synthesize('gr1c', specs, sys=sys)
-#print ctrl 
-# UAV 2
-ctrl = synth.synthesize('gr1c', specs, sys=sys2)
-#print ctrl 
-#print "Gr1c", ctrl 
-ctrl = synth.synthesize('omega', specs, sys=sys)
-#print "Omega", ctrl 
+# # Controller synthesis for each individual UAV
+# # UAV 1
+# ctrl = synth.synthesize('gr1c', specs, sys=sys, env=env0)
+# #print ctrl 
+# # UAV 2
+# ctrl = synth.synthesize('gr1c', specs, sys=sys2, env=env0)
+# #print ctrl 
+# #print "Gr1c", ctrl 
+# ctrl = synth.synthesize('omega', specs, sys=sys, env=env0)
+# #print "Omega", ctrl 
 
 
 # Controller synthesis for both UAVs
@@ -163,7 +182,7 @@ specs.moore = True
 # `env_init /\ sys_init` and work, for every environment variable
 # initial values that satisfy `env_init`.
 specs.qinit = '\E \A'
-ctrl = synth.synthesize('omega', specs)
+ctrl = synth.synthesize('omega', specs, env=env0)
 assert ctrl is not None, 'unrealizable'
 
 print ctrl

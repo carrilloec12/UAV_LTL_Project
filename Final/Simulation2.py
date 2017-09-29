@@ -20,51 +20,60 @@ import tomatlab
 #     +----+----+----+
 
 
+# UAV 1 
 sys = transys.FTS()
+sys.owner = 'sys'
 
 # Define the states of the system
-sys.states.add_from(['X0','X1','X2','X3','X4','X5','X6','X7','X8'])
+sys.states.add_from(['X0','X1','X2','X3','X4','X5','X6','X7','X8','X9','X10','X11','X12','X13','X14','X15','X16'])
 sys.states.initial.add('X0')    # start in state X0
 
 # Define the allowable transitions
 #! TODO (IF): can arguments be a singleton instead of a list?
 #! TODO (IF): can we use lists instead of sets?
 #!   * use optional flag to allow list as label
-sys.transitions.add_comb({'X0'}, {'X1', 'X3'})
-sys.transitions.add_comb({'X1'}, {'X0', 'X4', 'X2'})
-sys.transitions.add_comb({'X2'}, {'X1', 'X5'})
-sys.transitions.add_comb({'X3'}, {'X0', 'X4', 'X6'})
-sys.transitions.add_comb({'X4'}, {'X3', 'X1', 'X5', 'X7'})
-sys.transitions.add_comb({'X5'}, {'X4', 'X2', 'X8'})
-sys.transitions.add_comb({'X6'}, {'X7', 'X3'})
-sys.transitions.add_comb({'X7'}, {'X4', 'X6', 'X8'})
-sys.transitions.add_comb({'X8'}, {'X5', 'X7'})
+sys.transitions.add_comb({'X0'}, {'X1','X4'})
+sys.transitions.add_comb({'X1'}, {'X5','X0','X2'})
+sys.transitions.add_comb({'X2'}, {'X6','X1','X3'})
+sys.transitions.add_comb({'X3'}, {'X2','X7'})
+sys.transitions.add_comb({'X4'}, {'X5','X0','X8'})
+sys.transitions.add_comb({'X5'}, {'X1','X6','X4','X9'})
+sys.transitions.add_comb({'X6'}, {'X7','X2','X5','X10'})
+sys.transitions.add_comb({'X7'}, {'X3','X6','X11'})
+sys.transitions.add_comb({'X8'}, {'X12','X4','X9'})
+sys.transitions.add_comb({'X9'}, {'X5','X13','X10','X8'})
+sys.transitions.add_comb({'X10'}, {'X14','X6','X11','X9'})
+sys.transitions.add_comb({'X11'}, {'X15','X7','X10'})
+sys.transitions.add_comb({'X12'}, {'X13','X8'})
+sys.transitions.add_comb({'X13'}, {'X9','X12','X14'})
+sys.transitions.add_comb({'X14'}, {'X10','X13','X15'})
+sys.transitions.add_comb({'X15'}, {'X14','X11'})
 # @system_dynamics_section_end@
 
 # @system_labels_section@
 # Add atomic propositions to the states
-sys.atomic_propositions.add_from({'goal','obsX1','home','obsX5','obsX3', 'obsX7'})
+sys.atomic_propositions.add_from({'goal','obsX3','home','obsX12','obsX6', 'obsX9'})
 sys.states.add('X0', ap={'home'})
-sys.states.add('X8', ap={'goal'})
-sys.states.add('X1', ap={'obsX1'})
-sys.states.add('X5', ap={'obsX5'})
+sys.states.add('X15', ap={'goal'})
 sys.states.add('X3', ap={'obsX3'})
-sys.states.add('X7', ap={'obsX7'})
+sys.states.add('X6', ap={'obsX6'})
+sys.states.add('X9', ap={'obsX9'})
+sys.states.add('X12', ap={'obsX12'})
 """Park as an env AP
 """
 env0 = transys.FTS()
 env0.owner = 'env'
-env0.states.add_from({'a', 'b', 'c', 'd'})
-env0.states.initial.add('a')
+env0.states.add_from({'X3', 'X6', 'X9', 'X12'})
+env0.states.initial.add('X3')
 
-env0.atomic_propositions.add_from({'obs1', 'obs2', 'obs3', 'obs4'})
-env0.states.add('a', ap={'obs1'})
-env0.states.add('b', ap={'obs2'})
-env0.states.add('c', ap={'obs3'})
-env0.states.add('d', ap={'obs4'})
+env0.atomic_propositions.add_from({'obs3', 'obs6', 'obs9', 'obs12'})
+env0.states.add('X3', ap={'obs3'})
+env0.states.add('X6', ap={'obs6'})
+env0.states.add('X9', ap={'obs9'})
+env0.states.add('X12', ap={'obs12'})
 
 env0.transitions.add_from([
-    ('a', 'b'), ('b', 'c'), ('c', 'd'), ('d', 'c'), ('c', 'a')
+    ('X3', 'X6'), ('X6', 'X9'), ('X9', 'X12'), ('X12', 'X9'), ('X9', 'X6'), ('X6', 'X3')
 ])
 logger.info(env0)
 
@@ -74,11 +83,11 @@ env_prog = set()
 sys_vars = set()
 sys_init = {'home'}
 sys_prog = {'goal', 'home'}
-sys_safe = {'((obs1) -> X (!obsX1))', '((obs2) -> X (!obsX3))', '((obs3) -> X (!obsX5))', '((obs4) -> X (!obsX7))'}
+sys_safe = {'((obs3) -> X (!obsX3))', '((obs6) -> X (!obsX6))', '((obs9) -> X (!obsX9))', '((obs12) -> X (!obsX12))'}
 
-print sys
+#print sys
 
-print env0
+#print env0
 # # one additional requirement: if in lot,
 # # then stay there until park signal is turned off
 # sys_safe = {'(X(mem) <-> lot) || (mem && !park)',
@@ -93,7 +102,7 @@ specs.qinit = '\A \E'
 ctrl = synth.synthesize('omega', specs, sys=sys, env=env0)
 #ctrl.save('sys_and_env_ts0.pdf')
 
-print specs
+#print specs
 print ctrl 
 
 # """Park as an env action
